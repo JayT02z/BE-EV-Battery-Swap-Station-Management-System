@@ -1,0 +1,22 @@
+name: "Notify Discord"
+description: "Send message to Discord"
+inputs:
+  channel:
+    description: "Discord channel"
+    required: true
+  bot_token:
+    description: "Discord Bot Token"
+    required: true
+  content:
+    description: "Discord message content"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        curl -s -X POST https://discord.com/api/v9/channels/${{ inputs.channel }}/messages \
+          -H "Content-Type: application/json" \
+          -H "Authorization: ${{ inputs.bot_token }}" \
+          -d '{"content": "${{ inputs.content }}"}'
+      shell: bash
