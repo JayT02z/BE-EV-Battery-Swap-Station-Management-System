@@ -1,0 +1,149 @@
+# application.yml - API Gateway Configuration
+# Cấu hình tất cả môi trường trong một file
+server:
+  port: 9000
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Discovery Locator (tự động tạo routes từ Eureka)
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      # Gateway Routes
+      routes:
+        # ===== Auth-User Service =====
+        - id: auth-user-api
+          uri: lb://auth-user
+          predicates:
+            - Path=/api/auth/**,/api/users/**,/api/admin/**,/api/staff/**,/oauth2/**, /api/driver/**
+
+        - id: auth-user-swagger-ui
+          uri: lb://auth-user
+          predicates:
+            - Path=/auth-user/swagger-ui/**,/auth-user/swagger-ui.html
+          filters:
+            - RewritePath=/auth-user/(?<segment>.*), /$\{segment}
+
+        - id: auth-user-api-docs
+          uri: lb://auth-user
+          predicates:
+            - Path=/auth-user/v3/api-docs/**
+          filters:
+            - RewritePath=/auth-user/(?<segment>.*), /$\{segment}
+
+        # ===== Station Service =====
+        - id: station-api
+          uri: lb://station-service
+          predicates:
+            - Path=/station/api/**
+          filters:
+            - RewritePath=/station/(?<segment>.*), /${segment}
+
+        - id: station-swagger-ui
+          uri: lb://station-service
+          predicates:
+            - Path=/station/swagger-ui/**,/station/swagger-ui.html
+          filters:
+            - RewritePath=/station/(?<segment>.*), /$\{segment}
+
+        - id: station-api-docs
+          uri: lb://station-service
+          predicates:
+            - Path=/station/v3/api-docs/**
+          filters:
+            - RewritePath=/station/(?<segment>.*), /$\{segment}
+
+        # ===== Booking Service =====
+        - id: booking-api
+          uri: lb://booking-service
+          predicates:
+            - Path=/booking/api/**
+          filters:
+            - RewritePath=/booking/(?<segment>.*), /${segment}
+
+        - id: booking-swagger-ui
+          uri: lb://booking-service
+          predicates:
+            - Path=/booking/swagger-ui/**,/booking/swagger-ui.html
+          filters:
+            - RewritePath=/booking/(?<segment>.*), /$\{segment}
+
+        - id: booking-api-docs
+          uri: lb://booking-service
+          predicates:
+            - Path=/booking/v3/api-docs/**
+          filters:
+            - RewritePath=/booking/(?<segment>.*), /$\{segment}
+
+        # ===== Billing Service =====
+        - id: billing-api
+          uri: lb://billing-service
+          predicates:
+            - Path=/billing/api/**
+          filters:
+            - RewritePath=/billing/(?<segment>.*), /${segment}
+
+        - id: billing-swagger-ui
+          uri: lb://billing-service
+          predicates:
+            - Path=/billing/swagger-ui/**,/billing/swagger-ui.html
+          filters:
+            - RewritePath=/billing/(?<segment>.*), /$\{segment}
+
+        - id: billing-api-docs
+          uri: lb://billing-service
+          predicates:
+            - Path=/billing/v3/api-docs/**
+          filters:
+            - RewritePath=/billing/(?<segment>.*), /$\{segment}
+
+      # CORS Configuration (nếu cần)
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+            max-age: 3600
+      default-filters:
+          - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:yourSecretKeyMustBeAtLeast256BitsLongForHS256Algorithm}
+  access-token-expiration: 3600000  # 1 hour
+  refresh-token-expiration: 86400000  # 24 hours
+
+# Eureka Client
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    org.springframework.cloud.gateway.route: INFO
+    reactor.netty: INFO
+    org.springframework: INFO
+    com.boilerplate.gateway.filter: INFO
