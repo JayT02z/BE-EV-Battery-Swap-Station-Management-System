@@ -1,0 +1,1 @@
+đây là server eureka config tất cả các service hỗ trợ cho việc scaling về sau trở nên dễ dàng
