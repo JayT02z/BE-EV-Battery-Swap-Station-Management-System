@@ -1,0 +1,1 @@
+Đây là service gateway điều phối các service con bên trong service chưa giao tiếp với FE mà phải qua ngix
