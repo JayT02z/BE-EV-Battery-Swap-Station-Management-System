@@ -1,0 +1,174 @@
+# application.yml - Auth User Service Configuration
+# Cấu hình tất cả trong một file duy nhất
+server:
+  port: 9001
+  servlet:
+    context-path: /
+  forward-headers-strategy: framework
+  tomcat:
+    remoteip:
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
+
+spring:
+  application:
+    name: auth-user
+
+  # Docker Compose Integration - TẮT
+  docker:
+    compose:
+      enabled: false
+
+  # Database Configuration
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/authdb}
+    username: ${DB_USERNAME:ev}
+    password: ${DB_PASSWORD:evpass}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA & Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Flyway Migration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    clean-disabled: false
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      compression-type: snappy
+      max-in-flight-requests-per-connection: 5
+      enable-idempotence: true
+      request-timeout-ms: 30000
+      delivery-timeout-ms: 120000
+      properties:
+        spring.json.add.type.headers: false
+        spring.json.type.mapping: >
+          emailEvent:com.boilerplate.auth.model.event.EmailEvent,
+          supportTicketEvent:com.boilerplate.auth.model.event.SupportTicketEvent
+    consumer:
+      group-id: auth-user-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: >
+          emailEvent:com.boilerplate.auth.model.event.EmailEvent,
+          supportTicketEvent:com.boilerplate.auth.model.event.SupportTicketEvent
+      auto-offset-reset: earliest
+
+  # Mail Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          timeout: 5000
+          connectiontimeout: 5000
+          writetimeout: 5000
+
+  # OAuth2 Configuration
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:465257132532-fake-client-id.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET:GOCSPX-fake-secret-key}
+            scope:
+              - email
+              - profile
+              - openid
+            redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:9001/oauth2/callback}
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+# Eureka Client Configuration
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.value}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:yourSecretKeyMustBeAtLeast256BitsLongForHS256Algorithm}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600000}  # 1 hour (ms)
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}  # 7 days (ms)
+
+# OTP Configuration
+otp:
+  expiration-minutes: ${OTP_EXPIRATION_MINUTES:5}
+  length: ${OTP_LENGTH:6}
+
+# Application Configuration
+app:
+  name: "EV Battery Swap Station Management System"
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  verification-token-expiration-hours: ${VERIFICATION_TOKEN_EXPIRATION_HOURS:48}
+  kafka:
+    topics:
+      support-ticket-created: support.ticket.created
+      support-ticket-updated: support.ticket.updated
+      email-notification: notification.email
+
+# Springdoc OpenAPI (Swagger) Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+  show-actuator: false
+
+#AWS S3 Configuration
+aws:
+  region: ap-southeast-2
+  s3:
+    bucket-name: shoe-store-images-newbie
+  access-key: ${S3_ACCESS_KEY}
+  secret-key: ${S3_SECRET}
+
+# Logging - Common config
+logging:
+  level:
+    org.springframework: INFO
+    com.boilerplate.auth: DEBUG
+

@@ -1,7 +1,7 @@
 package com.boilerplate.auth.security;
 
-import com.boilerplate.auth.enums.Role;
-import com.boilerplate.auth.enums.UserStatus;
+import com.boilerplate.auth.enums.users.Role;
+import com.boilerplate.auth.enums.users.UserStatus;
 import com.boilerplate.auth.entity.User;
 import com.boilerplate.auth.repository.UserRepository;
 import org.slf4j.Logger;

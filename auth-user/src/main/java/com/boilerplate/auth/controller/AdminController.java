@@ -1,6 +1,6 @@
 package com.boilerplate.auth.controller;
 
-import com.boilerplate.auth.enums.Role;
+import com.boilerplate.auth.enums.users.Role;
 import com.boilerplate.auth.model.dto.request.ApproveRegistrationRequest;
 import com.boilerplate.auth.model.dto.request.UpdateStaffRequest;
 import com.boilerplate.auth.model.dto.response.AuthResponse;
