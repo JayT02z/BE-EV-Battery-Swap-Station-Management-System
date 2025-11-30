@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -16,9 +15,9 @@ import jakarta.mail.internet.MimeMessage;
 
 /**
  * Service xử lý gửi email
- * - Lắng nghe Kafka để nhận email event (tối ưu hiệu năng, xử lý bất đồng bộ)
  * - Sử dụng Thymeleaf templates cho email đẹp và dễ bảo trì
  * - Hỗ trợ MailHog cho development và SMTP thật cho production
+ * - Tích hợp Kafka (qua EmailKafkaListener) khi enabled
  */
 @Service
 @RequiredArgsConstructor
@@ -30,32 +29,11 @@ public class EmailService {
     private final KafkaProducerService kafkaProducerService;
 
     /**
-     * Lắng nghe message từ Kafka và gửi email
-     * Kafka giúp:
-     * - Xử lý bất đồng bộ, không block API response
-     * - Retry tự động khi gửi email thất bại
-     * - Scale tốt khi có nhiều email cần gửi
-     */
-    @KafkaListener(
-        topics = "email-topic",
-        groupId = "auth-user-service",
-        containerFactory = "emailEventKafkaListenerContainerFactory"
-    )
-    public void consumeEmailEvent(EmailEvent emailEvent) {
-        try {
-            sendEmail(emailEvent.getTo(), emailEvent.getSubject(), emailEvent.getBody());
-            log.info("✅ Đã gửi email thành công đến: {}", emailEvent.getTo());
-        } catch (Exception e) {
-            log.error("❌ Lỗi khi gửi email đến: {}", emailEvent.getTo(), e);
-            // TODO: Có thể push vào Dead Letter Queue (DLQ) để xử lý sau
-        }
-    }
-
-    /**
-     * Gửi email với HTML content
+     * Gửi email trực tiếp với HTML content
      * Hỗ trợ cả MailHog (dev) và SMTP thật (prod)
+     * Public để EmailKafkaListener có thể gọi
      */
-    private void sendEmail(String to, String subject, String body) throws MessagingException {
+    public void sendEmailDirect(String to, String subject, String body) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
