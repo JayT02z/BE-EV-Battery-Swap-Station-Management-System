@@ -16,7 +16,7 @@ services:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
-    container_name: base-eureka-server
+    container_name: eureka-server
     ports:
       - "8761:8761"
     environment:
@@ -72,7 +72,7 @@ services:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
@@ -128,19 +128,19 @@ services:
   # 1. Auth-User Database
   auth-user-db:
     image: postgres:16-alpine
-    container_name: base-auth-user-db
+    container_name: auth-user-db
     environment:
-      - POSTGRES_DB=authdb
-      - POSTGRES_USER=ev
-      - POSTGRES_PASSWORD=evpass
+      POSTGRES_DB: ${AUTH_USER_DB_NAME:authdb}
+      POSTGRES_USER: ${AUTH_USER_DB_USER:ev}
+      POSTGRES_PASSWORD: ${AUTH_USER_DB_PASSWORD:evpass}
     ports:
-      - "5433:5432"
+      - "${AUTH_USER_DB_PORT}:5432"
     volumes:
       - auth-user-data:/var/lib/postgresql/data
     networks: [ evnet ]
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ev -d authdb" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_USER} -d ${AUTH_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -148,19 +148,19 @@ services:
   # 2. Station Database
   station-db:
     image: postgres:16-alpine
-    container_name: base-station-db
+    container_name: station-db
     environment:
-      - POSTGRES_DB=stationdb
-      - POSTGRES_USER=ev
-      - POSTGRES_PASSWORD=evpass
+      POSTGRES_DB: ${STATION_DB_NAME:stationdb}
+      POSTGRES_USER: ${STATION_DB_USER:ev}
+      POSTGRES_PASSWORD: ${STATION_DB_PASSWORD:evpass}
     ports:
-      - "5434:5432"
+      - "${STATION_DB_PORT}:5432"
     volumes:
       - station-data:/var/lib/postgresql/data
     networks: [ evnet ]
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ev -d stationdb" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${STATION_USER} -d ${STATION_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -168,19 +168,19 @@ services:
   # 3. Booking Database
   booking-db:
     image: postgres:16-alpine
-    container_name: base-booking-db
+    container_name: booking-db
     environment:
-      - POSTGRES_DB=bookingdb
-      - POSTGRES_USER=ev
-      - POSTGRES_PASSWORD=evpass
+      POSTGRES_DB: ${BOOKING_DB_NAME:bookingdb}
+      POSTGRES_USER: ${BOOKING_DB_USER:ev}
+      POSTGRES_PASSWORD: ${BOOKING_DB_PASSWORD:evpass}
     ports:
-      - "5435:5432"
+      - "${BOOKING_DB_PORT}:5432"
     volumes:
       - booking-data:/var/lib/postgresql/data
     networks: [ evnet ]
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ev -d bookingdb" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${BOOKING_USER} -d ${BOOKING_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -188,19 +188,19 @@ services:
   # 4. Billing Database
   billing-db:
     image: postgres:16-alpine
-    container_name: base-billing-db
+    container_name: billing-db
     environment:
-      - POSTGRES_DB=billingdb
-      - POSTGRES_USER=ev
-      - POSTGRES_PASSWORD=evpass
+      POSTGRES_DB: ${BILLING_DB_NAME:billingdb}
+      POSTGRES_USER: ${BILLING_DB_USER:ev}
+      POSTGRES_PASSWORD: ${BILLING_DB_PASSWORD:evpass}
     ports:
-      - "5436:5432"
+      - "${BILLING_DB_PORT}:5432"
     volumes:
       - billing-data:/var/lib/postgresql/data
     networks: [ evnet ]
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ev -d billingdb" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${BILLING_USER} -d ${BILLING_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
