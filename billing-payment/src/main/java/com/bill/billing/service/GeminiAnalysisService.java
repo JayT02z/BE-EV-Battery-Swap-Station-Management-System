@@ -1,7 +1,7 @@
 package com.bill.billing.service;
 
-import com.bill.billing.clients.StationClient;
-import com.bill.billing.model.event.DTO.StationSwapSummaryDTO;
+import com.bill.billing.client.service.station_service.model.StationClient;
+import com.bill.billing.client.service.station_service.model.response.StationSwapSummaryDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +32,7 @@ public class GeminiAnalysisService {
     public String analyzeAllSwapReports() {
         try {
             // Lấy dữ liệu từ StationClient
-            List<StationSwapSummaryDTO> swapSummaries = stationClient.getAllSwapSummary();
+            List<StationSwapSummaryDto> swapSummaries = stationClient.getAllSwapSummary().getData();
 
             // Chuyển sang JSON
             String requestJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(swapSummaries);

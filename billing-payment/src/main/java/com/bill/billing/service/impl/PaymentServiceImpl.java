@@ -1,8 +1,11 @@
 package com.bill.billing.service.impl;
 
 import com.bill.billing.client.service.auth_user_service.model.admin.AuthUserServiceClient;
-import com.bill.billing.clients.BookingClient;
+import com.bill.billing.client.service.booking_service.model.BookingClient;
 import com.bill.billing.enums.PaymentStatus;
+import com.bill.billing.mapper.DriverMapper;
+import com.bill.billing.mapper.PackagePaymentMapper;
+import com.bill.billing.mapper.SingleSwapPaymentMapper;
 import com.bill.billing.model.DTO.CustomerPaymentsDTO;
 import com.bill.billing.model.DTO.PackagePaymentDTO;
 import com.bill.billing.model.DTO.SingleSwapPaymentDTO;
@@ -33,12 +36,16 @@ public class PaymentServiceImpl implements PaymentService {
   private final AuthUserServiceClient authUserClient;
   private final DriverRepository driverRepository;
   private final BookingClient bookingClient;
+  private final PackagePaymentMapper packagePaymentMapper;
+  private final SingleSwapPaymentMapper singleSwapPaymentMapper;
+  private final DriverMapper driverMapper;
 
   //================ PACKAGE PAYMENT ======================
   @Override
   public ResponseEntity<ResponseData<List<PackagePaymentDTO>>> getAllPackagePayments() {
     List<PackagePaymentDTO> payments = packagePaymentRepository.findAll()
-        .stream().map(PackagePaymentDTO::fromEntity)
+        .stream()
+        .map(packagePaymentMapper::toDTO)
         .collect(Collectors.toList());
     return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
         "Fetched all package payments successfully", payments));
@@ -49,16 +56,15 @@ public class PaymentServiceImpl implements PaymentService {
     Optional<PackagePayment> found = packagePaymentRepository.findById(id);
     if (found.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Package payment not found", null));
+          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Package payment không tồn tại", null));
     }
-    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Package payment found",
-        PackagePaymentDTO.fromEntity(found.get())));
+    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
+        "Lấy thông tin package payment thành công",
+        packagePaymentMapper.toDTO(found.get())));
   }
 
   @Override
   public ResponseEntity<ResponseData<PackagePaymentDTO>> createPackagePayment(PackagePaymentRequest request) {
-
-    PackagePayment payment = new PackagePayment();
 
     // Lấy thông tin từ AuthService
     var response = authUserClient.getDriverByEmployeeId(request.getCustomerId());
@@ -70,48 +76,34 @@ public class PaymentServiceImpl implements PaymentService {
 
     var userResponse = response.getData();
 
-    // Upsert driver
-    Driver driver = driverRepository.findByEmployeeId(userResponse.getEmployeeId()).orElse(new Driver());
-    driver.setEmail(userResponse.getEmail());
-    driver.setPhone(userResponse.getPhone());
-    driver.setFullName(userResponse.getFullName());
-    driver.setAddress(userResponse.getAddress());
-    driver.setIdentityCard(userResponse.getIdentityCard());
-    driver.setEmployeeId(userResponse.getEmployeeId());
-    driver.setBirthday(userResponse.getBirthday());
+    // Upsert driver sử dụng MapStruct
+    Driver driver = driverRepository.findByEmployeeId(userResponse.getEmployeeId())
+        .orElse(new Driver());
+    driverMapper.updateDriverFromUserResponse(userResponse, driver);
     driver = driverRepository.save(driver);
 
-    // Map payment
+    // Map payment sử dụng MapStruct
+    PackagePayment payment = packagePaymentMapper.toEntity(request);
     payment.setCustomerId(driver);
-    payment.setTotalAmount(request.getTotalAmount());
-    payment.setBaseAmount(request.getBaseAmount());
-    payment.setDiscountAmount(request.getDiscountAmount());
-    payment.setTaxAmount(request.getTaxAmount());
-    payment.setMethod(request.getMethod());
-    payment.setStatus(request.getStatus());
-    payment.setBookingId(request.getBookingId());
-    payment.setDescription(request.getDescription());
-    payment.setPaymentTime(request.getPaymentTime());
-    payment.setPackageId(request.getPackageId());
-    payment.setStartDate(request.getStartDate());
-    payment.setEndDate(request.getEndDate());
 
     // Save
     PackagePayment saved = packagePaymentRepository.save(payment);
 
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(new ResponseData<>(HttpStatus.CREATED.value(), "Package payment created successfully",
-            PackagePaymentDTO.fromEntity(saved)));
+        .body(new ResponseData<>(HttpStatus.CREATED.value(),
+            "Tạo package payment thành công",
+            packagePaymentMapper.toDTO(saved)));
   }
 
   @Override
   public ResponseEntity<ResponseData<Void>> deletePackagePayment(Long id) {
     if (!packagePaymentRepository.existsById(id)) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Package payment not found", null));
+          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Package payment không tồn tại", null));
     }
     packagePaymentRepository.deleteById(id);
-    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Package payment deleted successfully", null));
+    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
+        "Xóa package payment thành công", null));
   }
 
 
@@ -122,17 +114,19 @@ public class PaymentServiceImpl implements PaymentService {
     payment.setStatus(PaymentStatus.SUCCESS);
     bookingClient.updateBookingStatus(payment.getBookingId());
     packagePaymentRepository.save(payment);
-    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Payment confirmed successfully", null));
+    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
+        "Xác nhận thanh toán package thành công", null));
   }
 
   //================ SINGLE SWAP PAYMENT ======================
   @Override
   public ResponseEntity<ResponseData<List<SingleSwapPaymentDTO>>> getAllSingleSwapPayments() {
     List<SingleSwapPaymentDTO> payments = singleSwapPaymentRepository.findAll()
-        .stream().map(SingleSwapPaymentDTO::fromEntity)
+        .stream()
+        .map(singleSwapPaymentMapper::toDTO)
         .collect(Collectors.toList());
     return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
-        "Fetched all single swap payments successfully", payments));
+        "Lấy danh sách single swap payments thành công", payments));
   }
 
   @Override
@@ -140,16 +134,15 @@ public class PaymentServiceImpl implements PaymentService {
     Optional<SingleSwapPayment> found = singleSwapPaymentRepository.findById(id);
     if (found.isEmpty()) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Single swap payment not found", null));
+          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Single swap payment không tồn tại", null));
     }
-    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Single swap payment found",
-        SingleSwapPaymentDTO.fromEntity(found.get())));
+    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
+        "Lấy thông tin single swap payment thành công",
+        singleSwapPaymentMapper.toDTO(found.get())));
   }
 
   @Override
   public ResponseEntity<ResponseData<SingleSwapPaymentDTO>> createSingleSwapPayment(SingleSwapPaymentRequest request) {
-
-    SingleSwapPayment payment = new SingleSwapPayment();
 
     var response = authUserClient.getDriverByEmployeeId(request.getCustomerId());
 
@@ -160,44 +153,33 @@ public class PaymentServiceImpl implements PaymentService {
 
     var userResponse = response.getData();
 
-    Driver driver = driverRepository.findByEmployeeId(userResponse.getEmployeeId()).orElse(new Driver());
-    driver.setEmail(userResponse.getEmail());
-    driver.setPhone(userResponse.getPhone());
-    driver.setFullName(userResponse.getFullName());
-    driver.setAddress(userResponse.getAddress());
-    driver.setIdentityCard(userResponse.getIdentityCard());
-    driver.setEmployeeId(userResponse.getEmployeeId());
-    driver.setBirthday(userResponse.getBirthday());
+    // Upsert driver sử dụng MapStruct
+    Driver driver = driverRepository.findByEmployeeId(userResponse.getEmployeeId())
+        .orElse(new Driver());
+    driverMapper.updateDriverFromUserResponse(userResponse, driver);
     driver = driverRepository.save(driver);
 
+    // Map payment sử dụng MapStruct
+    SingleSwapPayment payment = singleSwapPaymentMapper.toEntity(request);
     payment.setCustomerId(driver);
-    payment.setTotalAmount(request.getTotalAmount());
-    payment.setBaseAmount(request.getBaseAmount());
-    payment.setDiscountAmount(request.getDiscountAmount());
-    payment.setTaxAmount(request.getTaxAmount());
-    payment.setMethod(request.getMethod());
-    payment.setStatus(request.getStatus());
-    payment.setBookingId(request.getBookingId());
-    payment.setDescription(request.getDescription());
-    payment.setPaymentTime(request.getPaymentTime());
-    payment.setStationId(request.getStationId());
-    payment.setPackageId(request.getPackageId());
 
     SingleSwapPayment saved = singleSwapPaymentRepository.save(payment);
 
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(new ResponseData<>(HttpStatus.CREATED.value(), "Single swap payment created successfully",
-            SingleSwapPaymentDTO.fromEntity(saved)));
+        .body(new ResponseData<>(HttpStatus.CREATED.value(),
+            "Tạo single swap payment thành công",
+            singleSwapPaymentMapper.toDTO(saved)));
   }
 
   @Override
   public ResponseEntity<ResponseData<Void>> deleteSingleSwapPayment(Long id) {
     if (!singleSwapPaymentRepository.existsById(id)) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND)
-          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Single swap payment not found", null));
+          .body(new ResponseData<>(HttpStatus.NOT_FOUND.value(), "Single swap payment không tồn tại", null));
     }
     singleSwapPaymentRepository.deleteById(id);
-    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Single swap payment deleted successfully", null));
+    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
+        "Xóa single swap payment thành công", null));
   }
 
   @Override
@@ -207,7 +189,8 @@ public class PaymentServiceImpl implements PaymentService {
     payment.setStatus(PaymentStatus.SUCCESS);
     singleSwapPaymentRepository.save(payment);
     bookingClient.updateBookingStatus(payment.getBookingId());
-    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(), "Payment confirmed successfully", null));
+    return ResponseEntity.ok(new ResponseData<>(HttpStatus.OK.value(),
+        "Xác nhận thanh toán single swap thành công", null));
   }
 
   //================ SUMMARY FOR CUSTOMER ======================
@@ -220,14 +203,22 @@ public class PaymentServiceImpl implements PaymentService {
     List<SingleSwapPayment> swapPayments = singleSwapPaymentRepository.findByCustomerId(driver);
     List<PackagePayment> packagePayments = packagePaymentRepository.findByCustomerId(driver);
 
-    double totalAmount = swapPayments.stream().mapToDouble(p -> p.getTotalAmount() != null ? p.getTotalAmount() : 0.0).sum()
-        + packagePayments.stream().mapToDouble(p -> p.getTotalAmount() != null ? p.getTotalAmount() : 0.0).sum();
+    double totalAmount = swapPayments.stream()
+            .mapToDouble(p -> p.getTotalAmount() != null ? p.getTotalAmount() : 0.0)
+            .sum()
+        + packagePayments.stream()
+            .mapToDouble(p -> p.getTotalAmount() != null ? p.getTotalAmount() : 0.0)
+            .sum();
 
     CustomerPaymentsDTO response = CustomerPaymentsDTO.builder()
         .customerId(driver.getEmployeeId())
         .customerName(driver.getFullName())
-        .swapPayments(swapPayments.stream().map(SingleSwapPaymentDTO::fromEntity).toList())
-        .packagePayments(packagePayments.stream().map(PackagePaymentDTO::fromEntity).toList())
+        .swapPayments(swapPayments.stream()
+            .map(singleSwapPaymentMapper::toDTO)
+            .collect(Collectors.toList()))
+        .packagePayments(packagePayments.stream()
+            .map(packagePaymentMapper::toDTO)
+            .collect(Collectors.toList()))
         .totalSwapPayments(swapPayments.size())
         .totalPackagePayments(packagePayments.size())
         .totalAmount(totalAmount)

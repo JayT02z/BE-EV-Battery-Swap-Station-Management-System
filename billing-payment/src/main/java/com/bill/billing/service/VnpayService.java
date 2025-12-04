@@ -1,6 +1,6 @@
 package com.bill.billing.service;
 
-import com.bill.billing.clients.BookingClient;
+import com.bill.billing.client.service.booking_service.model.BookingClient;
 import com.bill.billing.config.VnpayUrlBuilder;
 import com.bill.billing.enums.PaymentStatus;
 import com.bill.billing.enums.PaymentType;

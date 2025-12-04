@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
 public class VnpayUrlBuilder {
   private final VnpayConfigProperties config;
 

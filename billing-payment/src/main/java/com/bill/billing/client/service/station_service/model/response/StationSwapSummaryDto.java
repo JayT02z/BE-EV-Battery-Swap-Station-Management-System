@@ -1,4 +1,4 @@
-package com.bill.billing.model.event.DTO;
+package com.bill.billing.client.service.station_service.model.response;
 
 
 import com.bill.billing.enums.TimeSlot;
@@ -13,7 +13,7 @@ import java.util.Map;
 @Setter
 @AllArgsConstructor
 @Builder
-public class StationSwapSummaryDTO {
+public class StationSwapSummaryDto {
     private Long stationId;
     private String stationName;
     private String date; // yyyy-MM-dd
