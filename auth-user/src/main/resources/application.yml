@@ -70,6 +70,9 @@ spring:
           emailEvent:com.boilerplate.auth.model.event.EmailEvent,
           supportTicketEvent:com.boilerplate.auth.model.event.SupportTicketEvent
       auto-offset-reset: earliest
+    listener:
+      ack-mode: manual  # Cho phép manual acknowledgment nếu cần
+      missing-topics-fatal: false  # Không fail nếu topic không tồn tại
 
   # Mail Configuration
   mail:
@@ -140,6 +143,7 @@ app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   verification-token-expiration-hours: ${VERIFICATION_TOKEN_EXPIRATION_HOURS:48}
   kafka:
+    enabled: ${KAFKA_ENABLED:false}  # Disable Kafka by default for local development
     topics:
       support-ticket-created: support.ticket.created
       support-ticket-updated: support.ticket.updated

@@ -1,20 +1,20 @@
-package com.boilerplate.auth;
+package com.bill.billing;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @SpringBootApplication
-@EnableDiscoveryClient
-@EnableFeignClients
+@EnableMethodSecurity
 @EnableScheduling
-public class AuthUserApplication {
+@EnableFeignClients
+public class BillingPaymentApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AuthUserApplication.class, args);
-		System.out.println("Auth User chạy được rồi nè hẹ hẹ :))");
+		SpringApplication.run(BillingPaymentApplication.class, args);
+        System.out.println("Station Inventory running on port 9004");
 	}
 
 }
