@@ -2,8 +2,6 @@ package com.bill.billing.model.DTO;
 
 import com.bill.billing.enums.PaymentMethod;
 import com.bill.billing.enums.PaymentStatus;
-import com.bill.billing.model.entity.PackagePayment;
-import com.bill.billing.model.event.DTO.DriverDTO;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -31,27 +29,6 @@ public class PackagePaymentDTO {
     private Long packageId;
     private LocalDate startDate;
     private LocalDate endDate;
-
-    // Chuyển từ Entity sang DTO
-    public static PackagePaymentDTO fromEntity(PackagePayment entity) {
-        return PackagePaymentDTO.builder()
-                .id(entity.getId())
-                .customerId(DriverDTO.fromEntity(entity.getCustomerId()))
-                .totalAmount(entity.getTotalAmount())
-                .baseAmount(entity.getBaseAmount())
-                .discountAmount(entity.getDiscountAmount())
-                .taxAmount(entity.getTaxAmount())
-                .method(entity.getMethod())
-                .status(entity.getStatus())
-                .bookingId(entity.getBookingId())
-                .description(entity.getDescription())
-                .paymentTime(entity.getPaymentTime())
-                .createdAt(entity.getCreatedAt())
-                .packageId(entity.getPackageId())
-                .startDate(entity.getStartDate())
-                .endDate(entity.getEndDate())
-                .build();
-    }
 
 
 }

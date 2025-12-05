@@ -10,16 +10,10 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", uses = {DriverMapper.class})
 public interface PackagePaymentMapper {
 
-  @Mapping(target = "customerId", source = "customerId")
   PackagePaymentDTO toDTO(PackagePayment entity);
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "customerId", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   PackagePayment toEntity(PackagePaymentRequest request);
-
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "customerId", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
-  void updateEntityFromRequest(PackagePaymentRequest request, @MappingTarget PackagePayment entity);
 }
