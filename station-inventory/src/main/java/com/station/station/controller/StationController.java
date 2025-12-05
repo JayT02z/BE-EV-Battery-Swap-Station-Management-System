@@ -1,0 +1,132 @@
+package com.station.station.controller;
+
+import com.station.station.model.DTO.BatteryDTO;
+import com.station.station.model.DTO.NearestStationDTO;
+import com.station.station.model.DTO.StationDTO;
+import com.station.station.model.createRequest.AddStaffRequest;
+import com.station.station.model.createRequest.NearestStationRequest;
+import com.station.station.model.createRequest.StationRequest;
+import com.station.station.model.response.ResponseData;
+import com.station.station.service.OpenStreetMapService;
+import com.station.station.service.StationService;
+import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/stations")
+@RequiredArgsConstructor
+public class StationController {
+
+    private final StationService stationService;
+
+    @Autowired
+    private OpenStreetMapService openStreetMapService;
+
+    // ========================= GET ALL =========================
+    @Operation(
+            summary = "Lấy danh sách trạm",
+            description = "API lấy toàn bộ danh sách các trạm đổi pin trong hệ thống."
+    )
+    @GetMapping("/getAll")
+    public ResponseEntity<ResponseData<List<StationDTO>>> getAllStations() {
+        return stationService.getAllStations();
+    }
+
+    // ========================= GET BY ID =========================
+    @Operation(
+            summary = "Lấy chi tiết trạm theo ID",
+            description = "API lấy thông tin chi tiết của một trạm dựa trên ID."
+    )
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseData<StationDTO>> getStationById(@PathVariable Long id) {
+        return stationService.getStationById(id);
+    }
+
+    // ========================= CREATE =========================
+    @Operation(
+            summary = "Tạo mới trạm",
+            description = "API tạo mới một trạm đổi pin dựa trên thông tin từ StationRequest."
+    )
+    @PostMapping("/create")
+    public ResponseEntity<ResponseData<StationDTO>> createStation(@RequestBody StationRequest request) {
+        return stationService.createStation(request);
+    }
+
+    // ========================= UPDATE =========================
+    @Operation(
+            summary = "Cập nhật thông tin trạm",
+            description = "API cập nhật thông tin của trạm theo ID."
+    )
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ResponseData<StationDTO>> updateStation(
+            @PathVariable Long id,
+            @RequestBody StationRequest request) {
+        return stationService.updateStation(id, request);
+    }
+
+    // ========================= DELETE =========================
+    @Operation(
+            summary = "Xóa trạm",
+            description = "API xóa một trạm khỏi hệ thống dựa trên ID."
+    )
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<ResponseData<Void>> deleteStation(@PathVariable Long id) {
+        return stationService.deleteStation(id);
+    }
+
+    // ========================= NEAREST STATIONS =========================
+    @Operation(
+            summary = "Tìm trạm gần nhất",
+            description = "API sử dụng OpenStreetMap để tìm danh sách các trạm gần vị trí người dùng (latitude, longitude)."
+    )
+    @PostMapping("/nearest")
+    public ResponseEntity<ResponseData<List<NearestStationDTO>>> getNearestStations(
+            @RequestBody NearestStationRequest request) {
+        return openStreetMapService.findNearestStations(request.getLatitude(), request.getLongitude());
+    }
+
+    @PostMapping("/staffs/{stationId}")
+    public ResponseEntity<ResponseData<StationDTO>> addStaffToStation(
+            @PathVariable Long stationId,
+            @RequestBody AddStaffRequest request
+    ) {
+        return stationService.addStaffToStation(stationId, request.getStaffCode());
+    }
+
+    @PostMapping("/getbycode/{stationId}")
+    public ResponseEntity<ResponseData<StationDTO>> getStationByCode(
+            @PathVariable String stationId) {
+        return stationService.getStation(stationId);
+    }
+
+    @Operation(
+            summary = "Tìm trạm theo mã nhân viên",
+            description = "API tìm trạm dựa trên mã nhân viên đang làm việc tại trạm đó."
+    )
+    @GetMapping("/staff/{staffCode}")
+    public ResponseEntity<ResponseData<StationDTO>> findStationByStaffCode(
+            @PathVariable String staffCode) {
+        return stationService.findStationByStaffCode(staffCode);
+    }
+
+    @DeleteMapping("/staffs/{stationId}/{staffCode}")
+    @Operation(summary = "Xóa nhân viên khỏi trạm", description = "Xóa một nhân viên ra khỏi danh sách nhân viên của trạm.")
+    public ResponseEntity<ResponseData<StationDTO>> removeStaffFromStation(
+            @PathVariable Long stationId,
+            @PathVariable String staffCode) {
+        return stationService.removeStaffFromStation(stationId, staffCode);
+    }
+
+    @GetMapping("/code/{stationCode}/batteries")
+    @Operation(summary = "Lấy danh sách pin theo trạm", description = "API lấy toàn bộ danh sách pin thuộc một trạm cụ thể theo mã trạm.")
+    public ResponseEntity<ResponseData<List<BatteryDTO>>> getListBatteryByStation(
+            @PathVariable String stationCode) {
+        return stationService.getListBatteryByStationCode(stationCode);
+    }
+
+}

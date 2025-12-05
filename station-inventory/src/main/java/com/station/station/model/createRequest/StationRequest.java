@@ -1,0 +1,17 @@
+package com.station.station.model.createRequest;
+
+import com.station.station.enums.StationStatus;
+import lombok.*;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class StationRequest {
+    private String stationName;
+    private String address;
+    private String phoneNumber;
+    private int totalSlots;
+    private int availableSlots;
+    private StationStatus status;
+}
