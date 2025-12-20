@@ -1,8 +1,9 @@
-package com.bill.billing.clients;
+package com.bill.billing.client.config;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -47,6 +48,19 @@ public class SimpleJwtTokenGenerator {
 
         return token;
     }
+
+    public String generateInternalToken(String serviceName) {
+        Date now = new Date();
+        return Jwts.builder()
+            .setSubject(serviceName)
+            .claim("type", "INTERNAL")
+            .claim("roles", List.of("SERVICE"))
+            .setIssuedAt(now)
+            .setExpiration(new Date(now.getTime() + 60_000)) // 60s
+            .signWith(key)
+            .compact();
+    }
+
 
     /**
      * Tạo token 5 giây

@@ -6,8 +6,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name ="auth-user")
+@FeignClient(name ="auth-user", configuration = FeignJwtConfig.class)
 public interface AuthUserServiceClient {
-  @GetMapping("/drivers/{employeeId}")
+  @GetMapping("/api/admin/drivers/{employeeId}")
   ResponseData<UserResponse> getDriverByEmployeeId(@PathVariable("employeeId") String employeeId);
 }
