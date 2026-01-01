@@ -84,6 +84,6 @@ jwt:
 # Gemini API Configuration
 gemini:
   api:
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
     key: ${AI_KEY}
 

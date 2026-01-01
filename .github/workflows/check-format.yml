@@ -1,0 +1,53 @@
+name: Check & Fix Format via PR
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - staging
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  propose-format-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Apply Spotless Formatting
+        run: mvn spotless:apply
+
+      - name: Create Pull Request if code changes
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "style: format code with spotless"
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+          branch: fix-format/${{ github.head_ref }}
+          base: ${{ github.head_ref }}
+          delete-branch: true
+          title: "style: Auto-format fix for branch ${{ github.head_ref }}"
+          body: |
+            Automation Bot phát hiện code chưa đúng format.
+            Vui lòng merge PR này vào nhánh `${{ github.head_ref }}` để fix lỗi style.
+          labels: |
+            automated-pr
+            style-fix
+
+      - name: Check for changes and Fail
+        if: steps.cpr.outputs.pull-request-number != ''
+        run: |
+          echo "::error::Code chưa đúng định dạng! Một PR fix đã được tự động tạo: ${{ steps.cpr.outputs.pull-request-url }}"
+          echo "Vui lòng merge PR fix trước khi tiếp tục."
+          exit 1
